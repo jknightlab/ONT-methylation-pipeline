@@ -37,7 +37,7 @@ do
 		echo ""
 		echo "Where:"
 		echo "-i		Path to input directory containing merged base calls obtained from Nanopore's Dorado/MinKnow software. Calls must be in BAM format and there should be one fil per sample. [defaults to the working directory]"
-		echo "-o		Path to output directory where to write trimmed FASTQ files with base calls (these files will retained information tags regarding modified bases) [defaults to the working directory]"
+		echo "-o		Path to output directory where to write adapter-trimmed base calls in BAM format (these files will retain information tags regarding modified bases) [defaults to the working directory]"
 		echo "-s		Path to a text file containing a list of samples (one sample per line). Sample names should match file naming patterns."
 		echo ""
 		exit 1
