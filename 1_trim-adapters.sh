@@ -20,7 +20,7 @@ output_dir=$PWD
 
 
 # Reading in arguments
-while getopts i:o:s:b:h opt
+while getopts i:o:s:h opt
 do
 	case $opt in
 	i)
