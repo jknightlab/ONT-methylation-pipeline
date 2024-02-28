@@ -11,7 +11,7 @@
 #SBATCH -e /well/jknight/users/awo868/logs/ONT-pipeline/trim-adapters_%j.err 
 
 #SBATCH -p gpu_short
-#SBATCH -c 6
+#SBATCH --gpus-per-node 2
 ##########################################################################################
 
 # Setting default parameter values
