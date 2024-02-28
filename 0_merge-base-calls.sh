@@ -102,6 +102,8 @@ sampleName=$(echo ${sampleList[$((${SLURM_ARRAY_TASK_ID}-1))]} | sed 's/\n//g')
 barcodeID=$(echo ${barcodeList[$((${SLURM_ARRAY_TASK_ID}-1))]} | sed 's/\n//g')
 
 echo "[merge-calls]:	Merging base calls for sample $sampleName..."
+ulimit -n 2048
+
 samtools merge \
 	${output_dir}/${sampleName}.bam \
 	${input_dir}/${barcodeID}/*.bam
