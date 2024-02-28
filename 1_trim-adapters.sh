@@ -5,7 +5,7 @@
 ##########################################################################################
 # Specifying Slurm parameters for job submission
 #SBATCH -A jknight.prj 
-#SBATCH -J trim-adapteres
+#SBATCH -J trim-adapters
 
 #SBATCH -o /well/jknight/users/awo868/logs/ONT-pipeline/trim-adapters_%j.out 
 #SBATCH -e /well/jknight/users/awo868/logs/ONT-pipeline/trim-adapters_%j.err 
