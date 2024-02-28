@@ -10,8 +10,8 @@
 #SBATCH -o /well/jknight/users/awo868/logs/ONT-pipeline/trim-adapters_%j.out 
 #SBATCH -e /well/jknight/users/awo868/logs/ONT-pipeline/trim-adapters_%j.err 
 
-#SBATCH -p short 
-#SBATCH -c 1
+#SBATCH -p gpu_short
+#SBATCH -c 6
 ##########################################################################################
 
 # Setting default parameter values
