@@ -18,6 +18,8 @@
 input_dir=$PWD
 output_dir=$PWD
 
+# Specifying software paths
+samtools="/well/jknight/projects/sepsis-immunomics/cfDNA-methylation/ONT/software/samtools/bin/samtools"
 
 # Reading in arguments
 while getopts i:o:s:h opt
@@ -91,7 +93,8 @@ readarray sampleList < $sample_list
 sampleName=$(echo ${sampleList[$((${SLURM_ARRAY_TASK_ID}-1))]} | sed 's/\n//g')
 
 echo "[trim-adapters]:	Trimming ONT adapters from reads for $sampleName..."
-dorado trim ${input_dir}/${sampleName}.bam > ${output_dir}/${sampleName}_trimmed.bam
+dorado trim ${input_dir}/${sampleName}.bam | \
+	$samtools view  -b -h -o ${output_dir}/${sampleName}_trimmed.bam
 
 echo "[trim-adapters]:	...done!"
 
