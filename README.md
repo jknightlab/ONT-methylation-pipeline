@@ -16,7 +16,8 @@ The codes contained within this repository correspond to the main data processin
 
 ```
 ./
- |-- 0_merge-base-calls.sh			Merges all base calls giles (in BAM format) generated per barcode using the MinKNOW software into a single BAM file.
- `-- 1_trim-adapters.sh				Trims adapter and native barcode sequences from ONT reads using Dorado.
+ |-- 0_merge-base-calls.sh			Merges all base calls files (in BAM format) generated per barcode by the MinKNOW software into a single BAM file.
+ |-- 1_trim-adapters.sh				Trims adapter and native barcode sequences from ONT reads using Dorado.
+ `-- 2_align-reads.sh				Temporarily converts base calls to FASTQ format and aligns reads to the genome using minimap2
 ```
 
