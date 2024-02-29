@@ -126,12 +126,20 @@ then
         mkdir "${output_dir}/${modification_type}/${sampleName}"
 fi
  
-## Indexing BAM files
-echo "[get-modification-calls]:	Sorting BAM file ($sampleName)..."
-$samtools sort  ${input_dir}/${sampleName}_aligned-reads.bam -o ${input_dir}/tmp/${sampleName}_aligned-reads_sorted.bam
+## Indexing and sorting BAM files
+if [[ ! -f "${input_dir}/tmp/${sampleName}_aligned-reads_sorted.bam" ]]
+then
+	echo "[get-modification-calls]:	Sorting BAM file ($sampleName)..."
+	$samtools sort  ${input_dir}/${sampleName}_aligned-reads.bam -o ${input_dir}/tmp/${sampleName}_aligned-reads_sorted.bam
 
-echo "[get-modification-calls]:	Indexing BAM file ($sampleName)..."
-$samtools index ${input_dir}/tmp/${sampleName}_aligned-reads_sorted.bam
+fi
+
+if [[ ! -f "${input_dir}/tmp/${sampleName}_aligned-reads_sorted.bam.bai" ]]
+then
+	echo "[get-modification-calls]:	Indexing BAM file ($sampleName)..."
+	$samtools index ${input_dir}/tmp/${sampleName}_aligned-reads_sorted.bam
+fi
+
 
 echo "[get-modification-calls]:	Fetching modified base information and converting to BED format ($sampleName)..."
 cd ${output_dir}/${modification_type}/${sampleName}
