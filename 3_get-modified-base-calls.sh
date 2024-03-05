@@ -20,13 +20,14 @@ output_dir=$PWD
 modification_type="5mC"
 reference_genome="/well/jknight/projects/sepsis-immunomics/cfDNA-methylation/ONT/resources/genome-references/minimap2/grch38/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna"
 base_context="cpg"
+combine_5mC_and_5hmC="FALSE"
 
 # Specifying software paths
 samtools="/well/jknight/projects/sepsis-immunomics/cfDNA-methylation/ONT/software/samtools/bin/samtools"
 modbam2bed="/well/jknight/projects/sepsis-immunomics/cfDNA-methylation/ONT/software/modbam2bed/modbam2bed"
 
 # Reading in arguments
-while getopts i:o:s:m:c:r:h opt
+while getopts i:o:s:m:c:C:r:h opt
 do
 	case $opt in
 	i)
@@ -44,6 +45,9 @@ do
 	c)
 		base_context=$OPTARG
 		;;
+	C)
+		combine_5mC_and_5hmC=$OPTARG
+		;;
 	r)
 		reference_genome=$OPTARG
 		;;
@@ -55,6 +59,7 @@ do
 		echo "-o		Path to output directory where to write output BED files with base modification proportions per site [defaults to the working directory]"
 		echo "-s		Path to a text file containing a list of samples (one sample per line). Sample names should match file naming patterns."
 		echo "-c		Sequence context where to test for the presence of modified bases (either chg, chh or cpg). [defaults to cpg]"
+		echo "-C		Whether 5mC and 5hmC modifications should be combined and counted together (either TRUE or FALSE). [defaults to FALSE]"
 		echo "-m		Type of modification to analyse (e.g. 5mC, 5hmC, 5fC, 5caC, 5hmU, 5fU, 5caU, 6mA, 5oxoG, Xao, modA, moxC, modG, modT, modU and modN. For more information see modbam2bed's documentation) [defaults to 5mC]"
 		echo "-r		Path to a reference genome FASTA file used for alignment. [defaults to a local GRCh38 reference genome FASTA file]"
 		echo ""
@@ -91,6 +96,12 @@ then
         exit 2
 fi
 
+if [[ $combine_5mC_and_5hmC != "TRUE" && $combine_5mC_and_5hmC != "FALSE" ]]
+then
+        echo "[get-modification-calls]:	ERROR: Invalid -C option. This must be TRUE or FALSE"
+        exit 2
+fi
+
 
 # Outputing relevant information on how the job was run
 echo "------------------------------------------------" 
@@ -121,11 +132,23 @@ then
         mkdir "${output_dir}/${modification_type}"
 fi
 
-if [[ ! -d "${output_dir}/${modification_type}/${sampleName}" ]]
+if [[ $combine_5mC_and_5hmC == "FALSE" ]]
 then
-        mkdir "${output_dir}/${modification_type}/${sampleName}"
+	if [[ ! -d "${output_dir}/${modification_type}/${sampleName}" ]]
+	then
+		mkdir "${output_dir}/${modification_type}/${sampleName}"
+	fi
 fi
  
+if [[ $combine_5mC_and_5hmC == "TRUE" ]]
+then
+	if [[ ! -d "${output_dir}/combined/${sampleName}" ]]
+	then
+		mkdir "${output_dir}/combined/${sampleName}"
+	fi
+fi
+
+
 ## Indexing and sorting BAM files
 if [[ ! -f "${input_dir}/tmp/${sampleName}_aligned-reads_sorted.bam" ]]
 then
@@ -142,14 +165,29 @@ fi
 
 
 echo "[get-modification-calls]:	Fetching modified base information and converting to BED format ($sampleName)..."
-cd ${output_dir}/${modification_type}/${sampleName}
-$modbam2bed \
-	-m $modification_type \
-	--aggregate \
-	--$base_context \
-	$reference_genome \
-	${input_dir}/tmp/${sampleName}_aligned-reads_sorted.bam > \
-	${sampleName}_modified-base-calls_${modification_type}_per-strand.bed
+if [[ $combine_5mC_and_5hmC == "FALSE" ]]
+then
+	cd ${output_dir}/${modification_type}/${sampleName}
+	$modbam2bed \
+		--aggregate \
+		--$base_context \
+		-m $modification_type \
+		$reference_genome \
+		${input_dir}/tmp/${sampleName}_aligned-reads_sorted.bam > \
+		${sampleName}_modified-base-calls_${modification_type}_per-strand.bed
+fi
+
+if [[ $combine_5mC_and_5hmC == "TRUE" ]]
+then
+	cd ${output_dir}/combined/${sampleName}
+	$modbam2bed \
+		--aggregate \
+		--combine \
+		--$base_context \
+		-m $modification_type \
+		$reference_genome \
+		${input_dir}/tmp/${sampleName}_aligned-reads_sorted.bam > \
+		${sampleName}_modified-base-calls_combined_per-strand.bed
+fi
 
 echo "[get-modification-calls]:	...done!"
-
