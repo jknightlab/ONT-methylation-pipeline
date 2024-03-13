@@ -17,7 +17,11 @@ The codes contained within this repository correspond to the main data processin
 ```
 ./
  |-- 0_merge-base-calls.sh			Merges all base calls files (in BAM format) generated per barcode by the MinKNOW software into a single BAM file.
- |-- 1_trim-adapters.sh				Trims adapter and native barcode sequences from ONT reads using Dorado.
- `-- 2_align-reads.sh				Temporarily converts base calls to FASTQ format and aligns reads to the genome using minimap2
+ |-- 1_trim-adapters.sh				Trims adapter and native barcode sequences from ONT reads using porechop.
+ |-- 2_align-reads.sh				Aligns trimmed ONT reads to the genome using minimap2
+ |-- 3_repair-MM-rags.sh			Repairs methylation information encoded in the MM tags of the aligned BAM file using modkit.
+ |-- 4_clip-reads.sh				Removes methylation information from the end of reads (i.e. read clipping) using modkit.
+ |-- 5_get-methylation-calls.sh			Recovers pileup at CpGs and quantifies 5mC and 5hmC events at each position of interest using modkit.
+ `-- get-mapping-statistics.sh			Computes general mapping and alignment statistics from an aligned BAM file.
 ```
 
