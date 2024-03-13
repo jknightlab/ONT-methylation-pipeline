@@ -43,7 +43,7 @@ do
 		echo "Usage:	align-reads.sh [-i input_dir] [-o output_dir] [-s sample_list]"
 		echo ""
 		echo "Where:"
-		echo "-i		Path to input directory containing adapter-trimmed ONT base calls (in BAM format). [defaults to the working directory]"
+		echo "-i		Path to input directory containing adapter-trimmed ONT base calls (in FASTQ format). [defaults to the working directory]"
 		echo "-o		Path to output directory where to write aligned BAM files [defaults to the working directory]"
 		echo "-s		Path to a text file containing a list of samples (one sample per line). Sample names should match file naming patterns."
 		echo "-r		Path to a reference genome FASTA file used for alignment. [defaults to a local GRCh38 reference genome file for minimap2]"
@@ -99,12 +99,11 @@ readarray sampleList < $sample_list
 
 # Per-task processing 
 ## Defining input sample and barcode names
-sampleName=$(echo ${sampleList[$((${SLURM_ARRAY_TASK_ID}-1))]} | sed 's/\n//g')
+sample_name=$(echo ${sampleList[$((${SLURM_ARRAY_TASK_ID}-1))]} | sed 's/\n//g')
 
-echo "[align-reads]:	Aligning ONT reads with minimap2 ($sampleName)..."
-$samtools fastq -T "*" ${input_dir}/${sampleName}_trimmed.bam | \
-	$minimap2 -ax map-ont $reference_genome - -y | \
-	$samtools view -b -o ${output_dir}/${sampleName}_aligned-reads.bam
+echo "[align-reads]:	Aligning ONT reads with minimap2 ($sample_name)..."
+$minimap2 -ax map-ont $reference_genome ${input_dir}/${sample_name}_trimmed.fastq.gz -y | \
+	$samtools view -q 10 -b -o ${output_dir}/${sample_name}_trimmed_aligned-reads.bam
 
 echo "[align-reads]:	...done!"
 

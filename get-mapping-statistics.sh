@@ -88,11 +88,11 @@ sampleName=$(echo ${sampleList[$((${SLURM_ARRAY_TASK_ID}-1))]} | sed 's/\n//g')
 echo "[mapping-stats]:       Processing sample $sampleName..."	
 
 echo "[mapping-stats]:       Computing mapping statistics with samtools..."	
-samtools stats "${input_dir}/${sampleName}_aligned-reads_sorted.bam" > "${output_dir}/${sampleName}_mapping-statistics.txt"
+samtools stats "${input_dir}/${sampleName}_trimmed_aligned-reads_tag-repaired_sorted.bam" > "${output_dir}/${sampleName}_mapping-statistics.txt"
 
 echo "[mapping-stats]:       Computing genome coverage with BEDtools..."	
 /well/jknight/users/awo868/software/bedtools genomecov \
-	-ibam "${input_dir}/${sampleName}_aligned-reads_sorted.bam" \
+	-ibam "${input_dir}/${sampleName}_trimmed_aligned-reads_tag-repaired_sorted.bam" \
 	> "${output_dir}/${sampleName}_genome-coverage.txt"
 
 echo "[mapping-stats]:       ...done!"	
