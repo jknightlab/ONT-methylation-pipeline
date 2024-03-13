@@ -1,76 +1,53 @@
 #!/usr/bin/bash
 
-## Author:	Kiki Cano-Gamez (kiki.canogamez@well.ox.ac.uk)
+## Author:      Kiki Cano-Gamez (kiki.canogamez@well.ox.ac.uk)
 
 ##########################################################################################
 # Specifying Slurm parameters for job submission
+
 #SBATCH -A jknight.prj 
-#SBATCH -J trim-adapters
+#SBATCH -J porechop
 
-#SBATCH -o /well/jknight/users/awo868/logs/ONT-pipeline/trim-adapters_%j.out 
-#SBATCH -e /well/jknight/users/awo868/logs/ONT-pipeline/trim-adapters_%j.err 
+#SBATCH -o /well/jknight/users/awo868/logs/ONT-pipeline/porechop.%j.out 
+#SBATCH -e /well/jknight/users/awo868/logs/ONT-pipeline/porechop.%j.err 
 
-#SBATCH -p gpu_short
-#SBATCH --gpus-per-node 2
+#SBATCH -p short 
+#SBATCH -c 1
 ##########################################################################################
 
-# Setting default parameter values
+# Set default parameter values
 input_dir=$PWD
 output_dir=$PWD
-
-# Specifying software paths
+porechop="/well/jknight/users/awo868/software/Porechop/porechop-runner.py"
 samtools="/well/jknight/projects/sepsis-immunomics/cfDNA-methylation/ONT/software/samtools/bin/samtools"
 
-# Reading in arguments
-while getopts i:o:s:h opt
+# Read in arguments
+while getopts i:r:w:s:o:g:h opt
 do
 	case $opt in
+	s)
+		sample_list_file=$OPTARG
+		;;
 	i)
 		input_dir=$OPTARG
 		;;
 	o)
 		output_dir=$OPTARG
 		;;
-	s)
-		sample_list=$OPTARG
-		;;
 	h)
-		echo "Usage:	trim-adapters.sh [-i input_dir] [-o output_dir] [-s sample_list]"
+		echo "Usage:	trim-reads.sh [-s sample_list] [-i input_dir] [-o output_dir]"
 		echo ""
 		echo "Where:"
-		echo "-i		Path to input directory containing merged base calls obtained from Nanopore's Dorado/MinKnow software. Calls must be in BAM format and there should be one fil per sample. [defaults to the working directory]"
-		echo "-o		Path to output directory where to write adapter-trimmed base calls in BAM format (these files will retain information tags regarding modified bases) [defaults to the working directory]"
-		echo "-s		Path to a text file containing a list of samples (one sample per line). Sample names should match file naming patterns."
+		echo "-s		Text file containing a list of sample names (one per line) to be aligned. These names should match the naming convention of fastq files"
+		echo "-i		Directory where input fastq files are located [defaults to the working directory]"
+		echo "-o		Directory where output trimmed fastq files will be written [defaults to the working directory]"
 		echo ""
 		exit 1
 		;;
 	esac
 done
 
-
-# Validating arguments
-echo "[trim-adapters]:	Validating arguments..."
-
-if [[ ! -d $input_dir ]]
-then
-		echo "[trim-adapters]:	ERROR: Input directory not found."
-		exit 2
-fi 
-
-if [[ ! -d $output_dir ]]
-then
-		echo "[trim-adapters]:	ERROR: Output directory not found."
-        exit 2
-fi 
-
-if [[ ! -f $sample_list ]]
-then
-        echo "[trim-adapters]:	ERROR: Sample list file not found"
-        exit 2
-fi
-
-
-# Outputing relevant information on how the job was run
+# Output relevant information on how the job was run
 echo "------------------------------------------------" 
 echo "Run on host: "`hostname` 
 echo "Operating system: "`uname -s` 
@@ -79,22 +56,54 @@ echo "Started at: "`date`
 echo "Executing task ${SLURM_ARRAY_TASK_ID} of job ${SLURM_ARRAY_JOB_ID} "
 echo "------------------------------------------------" 
 
+echo "[trim-reads.sh]:	Validating arguments..."
 
-# Loading required modules and files
-echo "[trim-adapters]:	Loading required modules..."
-module load dorado/0.5.1-foss-2022a-CUDA-11.7.0
+if [[ ! -f $sample_list_file ]]
+then
+        echo "[trim-reads.sh]:	ERROR: Sample list file not found."
+        exit 2
+fi 
 
-echo "[trim-adapters]:	Reading sample list..."
-readarray sampleList < $sample_list
+if [[ ! -d $input_dir ]]
+then
+        echo "[trim-reads.sh]:	ERROR: Input (fastq) directory not found."
+        exit 2
+fi 
 
+if [[ ! -d $output_dir ]]
+then
+        echo "[trim-reads.sh]:	ERROR: Output directory not found."
+        exit 2
+fi 
 
-# Per-task processing 
-## Defining input sample and barcode names
-sampleName=$(echo ${sampleList[$((${SLURM_ARRAY_TASK_ID}-1))]} | sed 's/\n//g')
+echo "[trim-reads.sh]:	Loading required modules..."
+module load Anaconda3/2022.05
+eval "$(conda shell.bash hook)"
 
-echo "[trim-adapters]:	Trimming ONT adapters from reads for $sampleName..."
-dorado trim ${input_dir}/${sampleName}.bam | \
-	$samtools view  -b -h -o ${output_dir}/${sampleName}_trimmed.bam
+# Finding sample of interest in sample list
+echo "[trim-reads.sh]:	Reading in sample list..."
+readarray sample_list < $sample_list_file
+sample_name=$(echo ${sample_list[$((${SLURM_ARRAY_TASK_ID}-1))]} | sed 's/\n//g')
 
-echo "[trim-adapters]:	...done!"
+# Creating temporary output directory
+if [[ ! -d "${output_dir}/tmp" ]]
+then
+        mkdir "${output_dir}/tmp"
+fi
 
+# Converting reads to FASTQ format
+$samtools fastq -T "*" ${input_dir}/${sample_name}.bam > ${output_dir}/tmp/${sample_name}.fastq
+
+# Trimming reads with Porechop
+echo "[trim-reads.sh]:	Trimming adapter sequences for sample ${sample_name}..."
+$porechop \
+	-i "${output_dir}/tmp/${sample_name}.fastq" \
+	-o "${output_dir}/${sample_name}_trimmed.fastq"
+
+echo "[trin-reads.sh]: Compressing files..."
+gzip "${output_dir}/${sample_name}_trimmed.fastq"
+
+echo "[trim-reads.sh]:	Cleaning up..."
+rm ${output_dir}/tmp/${sample_name}.fastq
+
+echo "[trim-reads.sh]:	...done!"
