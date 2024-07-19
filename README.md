@@ -22,6 +22,7 @@ The codes contained within this repository correspond to the main data processin
  |-- 3_repair-MM-rags.sh			Repairs methylation information encoded in the MM tags of the aligned BAM file using modkit.
  |-- 4_clip-reads.sh				Removes methylation information from the end of reads (i.e. read clipping) using modkit.
  |-- 5_get-methylation-calls.sh			Recovers pileup at CpGs and quantifies 5mC and 5hmC events at each position of interest using modkit.
+ |-- 6_deconvolute-with-nanomix.sh		Performs tissue of origin deconvolution on cfDNA methyltomes using the Nanomix software.
  `-- get-mapping-statistics.sh			Computes general mapping and alignment statistics from an aligned BAM file.
 ```
 
